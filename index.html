@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <div>            
+            <button id="attack">Attack</button>
+
+            <button id="reset">Reset</button>
+
+            <ul id="log"></ul>
+        </div>
+
+        <script>
+            (function() {
+                class WaspGame {
+                    constructor(custom = {}) {
+                        this.options = Object.assign({
+                            onHit: function () {}, // Returns hit wasp object and game object
+                            onKill: function () {}, // Returns killed wasp object and game object
+                            onGameOver: function () {} // Returns game object
+                        }, custom)
+
+                        this.attacks = 0
+                        this.play = false
+                        this.nest = []
+                        this.wasps = [
+                            {
+                                name: 'queen',
+                                hitpoints: 80,
+                                damage: 0,
+                                hit: 7,
+                                total: 1,
+                                overOnKill: true
+                            },
+
+                            {
+                                name: 'worker',
+                                hitpoints: 68,
+                                damage: 0,
+                                hit: 10,
+                                total: 5,
+                                overOnKill: false
+                            },
+
+                            {
+                                name: 'drone',
+                                hitpoints: 60,
+                                damage: 0,
+                                hit: 12,
+                                total: 8,
+                                overOnKill: false
+                            }
+                        ]
+
+                        this.reset()
+                    }
+
+                    buildNest() {
+                        this.nest = []
+
+                        for (let i = 0; i < this.wasps.length; i++) {
+                            const wasp = this.wasps[i]
+
+                            for (let j = 0; j < wasp.total; j++) {
+                                this.nest.push(Object.assign({
+                                    id: i + j + ''
+                                }, wasp))
+                            }
+                        }
+
+                        this.play = true
+                    }
+
+                    attackRandomWasp() {
+                        if (!this.play) {
+                            return
+                        }
+
+                        this.attacks++
+
+                        const waspIndex = Math.floor(Math.random() * this.nest.length)
+                        const wasp = this.nest[waspIndex]
+                        wasp.damage = wasp.hit + wasp.damage
+
+                        this.options.onHit(wasp, this)
+
+                        if (wasp.hitpoints <= wasp.damage) {
+                            this.nest.splice(waspIndex, 1)
+
+                            this.options.onKill(wasp, this)
+
+                            if (this.nest.length <= 0 || wasp.overOnKill) {
+                                this.play = false
+                                this.options.onGameOver(this)
+                            }
+                        }
+                    }
+
+                    reset() {
+                        this.play = false
+                        this.attacks = 0
+
+                        this.buildNest()
+                    }
+                }
+
+                const game = new WaspGame({
+                    onHit: function({ id }, { nest }) {
+                        for (let i = 0; i < nest.length; i++) {
+                            const wasp = nest[i]
+                            let str = `${wasp.name}: ${wasp.hitpoints - wasp.damage}/${wasp.hitpoints} `;
+
+                            if (id === wasp.id) {
+                                str += `- hit for ${wasp.hit}`
+                            }
+
+                            output(str)
+                        }   
+                    },
+                    onKill: function({ name }) {
+                        output(`${name} dead`)
+                    },
+                    onGameOver: function({ attacks }) {
+                        output(`Game over! Total attacks: ${attacks}`)
+                    }
+                })
+
+                function output(text) {
+                    const listItem = document.createElement('LI')
+
+                    listItem.appendChild(
+                        document.createTextNode(text)
+                    )
+
+                    document.getElementById('log').appendChild(listItem)
+                }
+
+                document.getElementById('attack').addEventListener('click', function() {
+                    game.attackRandomWasp()
+                })
+
+                document.getElementById('reset').addEventListener('click', function() {
+                    document.getElementById('log').innerHTML = ''
+                    game.reset()
+                })
+            })()
+        </script>
+    </body>
+</html>
