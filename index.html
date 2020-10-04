@@ -10,6 +10,10 @@
                 font: inherit;
             }
 
+            body {
+                background-color: skyblue;
+            }
+
             button {
                 padding: 1rem 1.5rem;
                 cursor: pointer;
@@ -38,6 +42,10 @@
                 justify-content: center;
             }
 
+            .items-center {
+                align-items: center;
+            }
+
             .h-screen {
                 height: 100vh
             }
@@ -58,10 +66,39 @@
                 padding: 2rem;
             }
 
-            #game-area {
-                margin-bottom: 1rem;
+            #game {
+                margin: 0 auto;
+            }
+
+            #game-area-container {
+                max-width: 500px;
+            }
+
+            #game-area {    
                 background-color: rgb(255, 192, 74);
-                border-radius: 1rem;
+            }
+
+            @keyframes fly {
+                0% {
+                    transform: translateX(0%);
+                    transform: translateY(0%);
+                }
+                25% {
+                    transform: translateX(10%);
+                    transform: translateY(10%);
+                }
+                50% {
+                    transform: translateX(0%);
+                    transform: translateY(0%);
+                }
+                75% {
+                    transform: translateX(-10%);
+                    transform: translateY(-10%);
+                }
+                100% {
+                    transform: translateX(0%);
+                    transform: translateY(0%);
+                }
             }
 
             .wasp {
@@ -71,6 +108,20 @@
                 background-color: yellow;
                 border-radius: 0.25rem;
                 position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-transform: uppercase;
+                animation-timing-function: ease-out;
+            }
+
+            .wasp.alive {
+                animation: fly 1.5s infinite;
+            }
+
+            .wasp.dead {
+                transform: rotate(90deg);
+
             }
 
             .queen {
@@ -90,12 +141,52 @@
                 height: 0;
                 border-radius: 0.25rem;
                 background-color: red;
+                opacity: 0.7;
+            }
+
+            .relative {
+                position: relative;
+            }
+
+            .absolute {
+                position: absolute;
+            }
+
+            .inset {
+                top: 0;
+                bottom: 0;
+                left: 0;
+                right: 0;
+            }
+
+            #game-over {
+                background-color: rgba(109, 124, 128, 0.7);
+                align-content: center;
+                z-index: 2;
+                display: none;
+                font-size: 2rem;
+                color: white;
+                text-transform: uppercase;
+            }
+
+            .mb-2 {
+                margin-bottom: 2rem;
             }
         </style>
     </head>
     <body>
-        <div class="flex justify-center flex-row h-screen p-2">   
-            <div id="game-area" class="flex flex-grow flex-wrap justify-center"></div>
+        <div id="game" class="flex justify-center items-center flex-row h-screen p-2">   
+            <p class="mb-2">
+                Clear the nest or kill the Queen
+            </p>
+
+            <div id="game-area-container" class="relative mb-2">
+                <div id="game-over" class="absolute inset justify-center items-center">
+                    <h2>Game Over!</h2>
+                </div>
+
+                <div id="game-area" class="flex flex-grow flex-wrap justify-center items-center"></div>
+            </div>
 
             <div class="flex justify-center">
                 <button id="attack" class="primary">Attack</button>
@@ -166,9 +257,7 @@
                     }
 
                     attackRandomWasp() {
-                        if (!this.play) {
-                            return
-                        }
+                        if (!this.play) return
 
                         this.attacks++
 
@@ -203,6 +292,14 @@
                         const waspBox = document.getElementById(wasp.id)
                         let hit = waspBox.getElementsByClassName('hit')[0]
                         hit.style.height = `${wasp.damage/wasp.hitpoints * 100}%`
+                    },
+                    onKill: function({ id }) {
+                        const waspBox = document.getElementById(id)
+                        waspBox.classList.remove('alive')
+                        waspBox.classList.add('dead')
+                    },
+                    onGameOver: function() {
+                        document.getElementById('game-over').style.display = 'flex'
                     }
                 })
 
@@ -212,12 +309,15 @@
 
                         let item = document.createElement('DIV')
                         item.classList.add('wasp')
+                        item.classList.add('alive')
                         item.classList.add(wasp.name)
                         item.id = wasp.id
 
                         let hit = document.createElement('DIV')
                         hit.className = 'hit'
                         item.appendChild(hit)
+
+                        item.appendChild(document.createTextNode(wasp.name))
 
                         document.getElementById('game-area').appendChild(item)
                     }
@@ -231,6 +331,7 @@
 
                 document.getElementById('reset').addEventListener('click', function() {
                     document.getElementById('game-area').innerHTML = ''
+                    document.getElementById('game-over').style.display = 'none'
                     game.reset()
                     drawWasps()
                 })
