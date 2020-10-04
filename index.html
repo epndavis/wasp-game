@@ -1,12 +1,107 @@
 <!DOCTYPE html>
 <html>
+    <head>
+        <style>
+            * {
+                border: 0;
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                font: inherit;
+            }
+
+            button {
+                padding: 1rem 1.5rem;
+                cursor: pointer;
+                border-radius: 0.25rem;
+            }
+
+            button.primary {
+                background-color: red;
+                color: white;
+            }
+
+            button.secondary {
+                background-color: gray;
+                color: white;
+            }
+
+            .flex {
+                display: flex;
+            }
+
+            .flex-row {
+                flex-direction: column;
+            }
+
+            .justify-center {
+                justify-content: center;
+            }
+
+            .h-screen {
+                height: 100vh
+            }
+
+            .flex-grow {
+                flex: 1
+            }
+
+            .flex-wrap {
+                flex-wrap: wrap;
+            }
+
+            .w-full {
+                width: 100%;
+            }
+
+            .p-2 {
+                padding: 2rem;
+            }
+
+            #game-area {
+                margin-bottom: 1rem;
+                background-color: rgb(255, 192, 74);
+                border-radius: 1rem;
+            }
+
+            .wasp {
+                height: 4rem;
+                width: 4rem;
+                margin: 1rem;
+                background-color: yellow;
+                border-radius: 0.25rem;
+                position: relative;
+            }
+
+            .queen {
+                height: 7rem;
+                width: 7rem;
+            }
+
+            .worker {
+                height: 5rem;
+                width: 5rem;
+            }
+
+            .hit {
+                position: absolute;
+                width: 100%;
+                bottom: 0;
+                height: 0;
+                border-radius: 0.25rem;
+                background-color: red;
+            }
+        </style>
+    </head>
     <body>
-        <div>            
-            <button id="attack">Attack</button>
+        <div class="flex justify-center flex-row h-screen p-2">   
+            <div id="game-area" class="flex flex-grow flex-wrap justify-center"></div>
 
-            <button id="reset">Reset</button>
+            <div class="flex justify-center">
+                <button id="attack" class="primary">Attack</button>
 
-            <ul id="log"></ul>
+                <button id="reset" class="secondary">Reset</button>
+            </div>
         </div>
 
         <script>
@@ -62,7 +157,7 @@
 
                             for (let j = 0; j < wasp.total; j++) {
                                 this.nest.push(Object.assign({
-                                    id: i + j + ''
+                                    id: i + '' + j
                                 }, wasp))
                             }
                         }
@@ -104,43 +199,40 @@
                 }
 
                 const game = new WaspGame({
-                    onHit: function({ id }, { nest }) {
-                        for (let i = 0; i < nest.length; i++) {
-                            const wasp = nest[i]
-                            let str = `${wasp.name}: ${wasp.hitpoints - wasp.damage}/${wasp.hitpoints} `;
-
-                            if (id === wasp.id) {
-                                str += `- hit for ${wasp.hit}`
-                            }
-
-                            output(str)
-                        }   
-                    },
-                    onKill: function({ name }) {
-                        output(`${name} dead`)
-                    },
-                    onGameOver: function({ attacks }) {
-                        output(`Game over! Total attacks: ${attacks}`)
+                    onHit: function(wasp, { nest }) {
+                        const waspBox = document.getElementById(wasp.id)
+                        let hit = waspBox.getElementsByClassName('hit')[0]
+                        hit.style.height = `${wasp.damage/wasp.hitpoints * 100}%`
                     }
                 })
 
-                function output(text) {
-                    const listItem = document.createElement('LI')
+                function drawWasps() {
+                    for (let i = 0; i < game.nest.length; i++) {
+                        const wasp = game.nest[i]
 
-                    listItem.appendChild(
-                        document.createTextNode(text)
-                    )
+                        let item = document.createElement('DIV')
+                        item.classList.add('wasp')
+                        item.classList.add(wasp.name)
+                        item.id = wasp.id
 
-                    document.getElementById('log').appendChild(listItem)
+                        let hit = document.createElement('DIV')
+                        hit.className = 'hit'
+                        item.appendChild(hit)
+
+                        document.getElementById('game-area').appendChild(item)
+                    }
                 }
+
+                drawWasps()
 
                 document.getElementById('attack').addEventListener('click', function() {
                     game.attackRandomWasp()
                 })
 
                 document.getElementById('reset').addEventListener('click', function() {
-                    document.getElementById('log').innerHTML = ''
+                    document.getElementById('game-area').innerHTML = ''
                     game.reset()
+                    drawWasps()
                 })
             })()
         </script>
